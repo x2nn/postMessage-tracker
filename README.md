@@ -2,6 +2,7 @@
 
 ## 简介
 
+原作者：https://github.com/fransr/postMessage-tracker
  根据
 
 `postMessage-tracker` 是一款为 Web 开发者和安全研究人员设计的 Chrome 扩展程序。它能实时监控和分析网页上的 `window.postMessage` 事件监听器，帮助您深入理解页面中跨窗口通信的机制。
