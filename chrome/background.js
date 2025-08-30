@@ -52,11 +52,41 @@ function logListener(data) {
   });
 }
 
+// Save state to storage
+async function saveState() {
+  try {
+    const { tab_listeners = {} } = await chrome.storage.local.get('tab_listeners');
+    const { selectedId = -1 } = await chrome.storage.local.get('selectedId');
+    await chrome.storage.local.set({
+      tab_listeners,
+      selectedId
+    });
+  } catch (error) {
+    console.error('Error saving state:', error);
+  }
+}
+
+// Debounce utility
+function debounce(func, delay) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), delay);
+  };
+}
+
+const debouncedSaveState = debounce(saveState, 500); // Debounce save state by 500ms
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   console.log('message from cs', msg);
   const tabId = sender.tab.id;
 
   (async () => {
+    if (!msg) {
+        console.error("Received a null message.");
+        return;
+    }
     if (msg.listener) {
       if (msg.listener == 'function () { [native code] }') return;
       msg.parent_url = sender.tab.url;
@@ -84,6 +114,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     } else {
       refreshCount(tabId);
     }
+    debouncedSaveState();
   })();
 
   return true; // Keep the message channel open for async response
@@ -107,6 +138,7 @@ chrome.tabs.onUpdated.addListener((tabId, props) => {
           const { tab_listeners = {} } = await chrome.storage.local.get('tab_listeners');
           tab_listeners[tabId] = [];
           await chrome.storage.local.set({ tab_listeners });
+          debouncedSaveState();
         }
       }
     }
@@ -122,6 +154,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   (async () => {
     await chrome.storage.local.set({ selectedId: activeInfo.tabId });
     refreshCount(activeInfo.tabId);
+    debouncedSaveState();
   })();
 });
 
@@ -131,6 +164,7 @@ chrome.runtime.onStartup.addListener(() => {
     if (tabs.length > 0) {
       chrome.storage.local.set({ selectedId: tabs[0].id });
       refreshCount(tabs[0].id);
+      debouncedSaveState();
     }
   });
 });

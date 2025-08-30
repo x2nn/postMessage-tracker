@@ -59,11 +59,31 @@ var l = function(listener, pattern_before, additional_offset) {
 
     console.groupCollapsed("postMessage-tracker: listener added");
     console.log("Listener function:", listener);
-    console.log(original_stack.substring(original_stack.indexOf('\n') + 1)); // Log clickable stack
+    if (original_stack && typeof original_stack.substring === 'function') {
+        console.log(original_stack.substring(original_stack.indexOf('\n') + 1)); // Log clickable stack
+    }
     console.groupEnd();
 };
 var jqc = function(key) {
-    m({log:['Found key', key, typeof window[key], window[key] ? window[key].toString(): window[key]]});
+    var value = window[key];
+    var valueStr;
+    try {
+        // Attempt to create a string representation, handle potential errors
+        if (value === null) {
+            valueStr = 'null';
+        } else if (value === undefined) {
+            valueStr = 'undefined';
+        } else if (typeof value.toString === 'function') {
+            valueStr = value.toString();
+        } else {
+            valueStr = '[Non-stringifiable object]';
+        }
+    } catch (e) {
+        valueStr = '[Error converting to string]';
+    }
+
+    m({log:['Found key', key, typeof value, valueStr]});
+
     if(typeof window[key] == 'function' && typeof window[key]._data == 'function') {
         m({log:['found jq function', window[key].toString()]});
         ev = window[key]._data(window, 'events');
@@ -74,7 +94,16 @@ var jqc = function(key) {
             jq(instance.events);
         }
     } else if(window[key]) {
-        m({log:['Use events directly', window[key].toString()]});
+        var value = window[key];
+        var valueStr = '[Object]'; // Default for objects
+        if (value && typeof value.toString === 'function') {
+            try {
+                valueStr = value.toString();
+            } catch (e) {
+                valueStr = '[Error calling toString]';
+            }
+        }
+        m({log:['Use events directly', valueStr]});
         jq(window[key].events);
     }
 };
@@ -118,7 +147,7 @@ var c = function(listener) {
 
 var onmsgport = function(e){
     var p = (e.ports.length?'%cport'+e.ports.length+'%c ':'');
-    var msg = '%cport%c→%c' + h(e.source) + '%c ' + p + (typeof e.data == 'string'?e.data:'j '+JSON.stringify(e.data));
+    var msg = '%cport%c\u2192%c' + h(e.source) + '%c ' + p + (typeof e.data == 'string'?e.data:'j '+JSON.stringify(e.data));
     if (p.length) {
         console.log(msg, "color: blue", '', "color: red", '', "color: blue", '');
     } else {
@@ -127,7 +156,7 @@ var onmsgport = function(e){
 };
 var onmsg = function(e){
     var p = (e.ports.length?'%cport'+e.ports.length+'%c ':'');
-    var msg = '%c' + h(e.source) + '%c→%c' + h() + '%c ' + p + (typeof e.data == 'string'?e.data:'j '+JSON.stringify(e.data));
+    var msg = '%c' + h(e.source) + '%c\u2192%c' + h() + '%c ' + p + (typeof e.data == 'string'?e.data:'j '+JSON.stringify(e.data));
     if (p.length) {
         console.log(msg, "color: red", '', "color: green", '', "color: blue", '');
     } else {
