@@ -1,8 +1,10 @@
-var port = chrome.extension.connect({
+var port = chrome.runtime.connect({
 	name: "Sample Communication"
 });
 
-
+/**
+ * Fired when we finish loading the popup.
+ */
 function loaded() {
 	port.postMessage("get-stuff");
 	port.onMessage.addListener(function(msg) {
@@ -14,8 +16,8 @@ function loaded() {
 	});
 }
 
-window.onload = loaded
-//addEventListener('DOMContentLoaded', loaded);
+// window.onload = loaded
+addEventListener('DOMContentLoaded', loaded);
 
 function listListeners(listeners) {
 	var x = document.getElementById('x');

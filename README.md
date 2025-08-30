@@ -1,51 +1,53 @@
 # postMessage-tracker
 
-Made by [Frans Rosén](https://twitter.com/fransrosen). Presented during the ["Attacking modern web technologies"-talk](https://www.youtube.com/watch?v=oJCCOnF25JU) ([Slides](https://speakerdeck.com/fransrosen/owasp-appseceu-2018-attacking-modern-web-technologies)) at OWASP AppSec Europe back in 2018, but finally released in May 2020.
+## 简介
 
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/listener-uber.png" width="500" />
+ 根据
 
-This Chrome extension monitors postMessage-listeners by showing you an indicator about the amount of listeners in the current window.
+`postMessage-tracker` 是一款为 Web 开发者和安全研究人员设计的 Chrome 扩展程序。它能实时监控和分析网页上的 `window.postMessage` 事件监听器，帮助您深入理解页面中跨窗口通信的机制。
 
-It supports tracking listeners in all subframes of the window. It also keeps track of short-lived listeners and listeners enabled upon interactions. You can also log the listener functions and locations to look them through them at a later stage by using the Log URL-option in the extension. This enables you to find hidden listeners that are only enabled for a short time inside an iframe.
+本扩展已完全升级至 **Manifest V3**，确保了更好的性能、安全性和面向未来的兼容性。
 
-It also shows you the interaction between windows inside the console and will specify the windows using a path you can use yourself to replay the message:
+##核心功能
 
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/console.png" width="350" />
+### 1. 全面的监听器捕获
 
-It also supports tracking communication happening between different windows, using `diffwin` as sender or receiver in the console.
+通过在页面加载的最早阶段（`document_start`）注入脚本，本扩展能可靠地捕获所有 `message` 事件监听器的注册行为，无论是静态脚本、动态添加的脚本，还是在 `iframe` 中注册的监听器。
 
-# Features
+### 2. 开发者控制台集成
 
-* Supports Raven, New Relic, Rollbar, Bugsnag and jQuery wrappers and "unpacks" them to show you the real listener.
+每当一个 `message` 监听器被注册时，扩展会在开发者控制台中输出一个可折叠的日志分组。展开后，您可以清晰地看到：
 
-* Tries to bypass and reroute wrappers so the Devtools console will show the proper listeners:
-
-**Using New Relic:**
-
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/before.png" width="200" />
-
-**After, with postMessage-tracker:**
-
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/after.png" width="200" />
-
-**Using jQuery:**
-
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/before-jquery.png" width="200" />
-
-**After, with postMessage-tracker:**
-
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/after-jquery.png" width="200" />
-
-* Allows you to set a Log URL inside the extension options to allow you to log all information about each listener to an endpoint by submitting the listener and the function (to be able to look through all listeners later). You can find the options in the Extension Options when clicking the extension in `chrome://extensions`-page:
-
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/options.png" width="300" />
-
-* Supports anonymous functions. Chrome does not support to stringify an anonymous function, in the cases of anonymous functions, you will see the `bound`-string as the listener:
-
-<img src="https://github.com/fransr/postMessage-tracker/raw/docs-images/images/anonymous.png" width="300" />
+-   **监听器函数对象**：可以直接审查函数本身。
+-   **可点击的调用栈**：直接点击堆栈跟踪中的文件路径，即可快速定位到注册该监听器的源代码位置，极大提升了调试效率。
 
 
-# Known issues
 
-~Since some websites could be served as XML with a XHTML-namespace, it will also attach itself to plain XML-files and will be rendered in the top of the XML. This might confuse you if you look at XML-files in the browser, as the complete injected script is in the DOM of the XML. I haven't found a way to hide it from real XML-files, but still support it for XHTML-namespaces.~ The content script is not added to the DOM if the `document.contentType` is `application/xml` which happens when Chrome renders XML-files.
+### 3. 实时状态指示
 
+扩展图标会以徽章形式实时显示当前页面上已激活的 `message` 监听器数量，让您对页面的通信状态一目了然。
+
+### 4. 详细的监听器列表
+
+点击扩展图标，弹出的窗口会详细列出当前页面捕获到的所有监听器，包括：
+
+-   **来源域（Domain）**
+-   **框架路径（Frame Path）**
+-   **注册位置的单行调用栈**
+-   **完整的监听器函数代码**
+
+### 5. 智能解包（Unwrapping）
+
+自动识别并“解开”由 jQuery、New Relic、Sentry 等常见库创建的包装函数，直达原始的、真正的监听器函数。
+
+### 6. 远程日志（可选）
+
+在扩展的选项页面，您可以配置一个“日志 URL”。启用后，所有捕获到的监听器信息（包括函数代码、调用栈、来源等）都会以 JSON 格式发送到您指定的服务器端点，便于进行离线分析或团队共享。
+
+## 安装与使用
+
+1.  下载或克隆本仓库到本地。
+2.  打开 Chrome 浏览器，进入 `chrome://extensions` 页面。
+3.  启用“开发者模式”。
+4.  点击“加载已解压的扩展程序”，选择本项目的 `chrome` 文件夹。
+5.  打开任意网页，开始监控 `postMessage` 事件！
